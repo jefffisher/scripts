@@ -95,10 +95,14 @@ bind '"\e[A":history-search-backward'
 bind '"\e[B":history-search-forward'
 
 function ll() {
-    LAST="$(history | grep -v '\bll$' | tail -1 | tr -s ' ' | cut -d' ' -f3-)"
-    if ! echo "$LAST" | grep "\bless\b" > /dev/null; then LAST="$LAST | less"; fi
-    eval "$LAST"
+    CMD="$(fc -ln -2 -2 | sed 's/^[ \t]*//') | less"
+    for e in $(history 2 | awk '{ print $1 }'); do
+        history -d $e
+    done
+    eval "$CMD"
+    history -s "$CMD"
 }
+
 
 function ls {
     if [ -t 1 ]; then OPT=--color=always; else OPT=; fi
@@ -108,7 +112,14 @@ function ls {
 svn() {
     case $1 in
     "log"|"st"|"status"|"help") command svn $@ | less;;
-    "diff") command svn -x -udpw $@ | ([ -t 1 ] && tr -d '\r' | colordiff | less || cat);;
+    "diff")
+        if [ -t 1 ]; then
+            OPTS=-udpw
+        else
+            OPTS=-ud
+        fi
+        command svn -x -udpw $@ | ([ -t 1 ] && tr -d '\r' | colordiff | less || cat)
+        ;;
     "wdiff"|"wd") command svn -x -udpw diff ${@:2:$#-1} | ([ -t 1 ] && wdiff -nd | tr -d '\r' | colordiff | less || cat);;
     "patch")  [ "$#" -gt "1" ] && patch -p0 ${@:2:$#-2} -i ${!#} || patch --help;;
     "blame") command svn $@ | awk '{ if (R[$1] == "") R[$1] = length(R) % 147 + 70; printf "\x1b[1;38;5;%dm %5d %s\x1b[0m\n", R[$1], NR, $0 }' | less;;
