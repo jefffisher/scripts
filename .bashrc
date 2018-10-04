@@ -118,7 +118,7 @@ svn() {
         else
             OPTS=-ud
         fi
-        command svn -x -udpw $@ | ([ -t 1 ] && tr -d '\r' | colordiff | less || cat)
+        command svn -x $OPTS $@ | ([ -t 1 ] && tr -d '\r' | colordiff | less || cat)
         ;;
     "wdiff"|"wd") command svn -x -udpw diff ${@:2:$#-1} | ([ -t 1 ] && wdiff -nd | tr -d '\r' | colordiff | less || cat);;
     "patch")  [ "$#" -gt "1" ] && patch -p0 ${@:2:$#-2} -i ${!#} || patch --help;;
